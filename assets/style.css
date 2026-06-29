@@ -365,12 +365,12 @@ header.scrolled{box-shadow:0 8px 28px rgba(13,35,56,.10)}
 .dest{transition:transform .25s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;will-change:transform}
 
 /* ---------- confetti / fireworks canvas + toast ---------- */
-.fx-canvas{position:fixed;inset:0;pointer-events:none;z-index:10000}
+.fx-canvas{position:fixed;inset:0;pointer-events:none;z-index:11500}
 .fx-toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);
   background:linear-gradient(155deg,var(--navy),var(--navy-deep));color:#fff;
   padding:14px 24px;border-radius:14px;font-weight:600;font-size:14.5px;
   box-shadow:0 18px 44px rgba(13,35,56,.35);border:1px solid rgba(217,179,107,.45);
-  z-index:10001;opacity:0;transition:opacity .35s ease,transform .35s ease;max-width:88vw;text-align:center}
+  z-index:12001;opacity:0;transition:opacity .35s ease,transform .35s ease;max-width:88vw;text-align:center}
 .fx-toast.in{opacity:1;transform:translate(-50%,0)}
 
 /* ---------- scroll-driven flying plane ---------- */
@@ -406,6 +406,64 @@ header a:hover .logo-lockup{animation:wiggle .5s ease}
 .way:hover .tag{transform:rotate(0)}
 .passport-stamp{transition:transform .4s cubic-bezier(.2,1.5,.4,1)}
 .passport-stamp:hover{transform:rotate(0) scale(1.08)}
+
+/* ---------- intro preloader (unlocking) ---------- */
+html.preloading{overflow:hidden}
+.preloader{position:fixed;inset:0;z-index:11000;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 38%,#13335480,transparent 60%),linear-gradient(160deg,var(--navy),var(--navy-deep));
+  transition:opacity .6s ease,transform .7s cubic-bezier(.7,0,.3,1)}
+.preloader.done{opacity:0;transform:scale(1.06);pointer-events:none}
+.pl-inner{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:20px}
+.pl-lock{color:var(--gold-bright);filter:drop-shadow(0 10px 26px rgba(0,0,0,.45))}
+.pl-lock .pl-bodyrect{fill:var(--gold)}
+.pl-lock .pl-hole{fill:var(--navy-deep)}
+.pl-lock .pl-shackle{transform-origin:68px 34px;transition:transform .55s cubic-bezier(.5,-0.5,.3,1.5)}
+.preloader.unlock .pl-lock{animation:lockPop .6s ease forwards}
+.preloader.unlock .pl-shackle{transform:translateY(-12px) rotate(30deg)}
+@keyframes lockPop{0%{transform:translateY(0)}28%{transform:translateY(0) scale(1.07)}100%{transform:translateY(-4px) scale(1)}}
+.pl-word{font-family:var(--display);font-size:25px;letter-spacing:.01em;color:#fff;opacity:0;transform:translateY(8px);
+  animation:plWord .6s ease .38s forwards}
+.pl-sub{font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--slate-soft);opacity:0;
+  animation:plWord .6s ease .56s forwards}
+@keyframes plWord{to{opacity:1;transform:none}}
+
+/* ---------- living aurora hero + shimmer headline ---------- */
+.hero::before{animation:auroraA 15s ease-in-out infinite alternate}
+.hero::after{animation:auroraB 19s ease-in-out infinite alternate}
+@keyframes auroraA{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-42px,32px) scale(1.16)}}
+@keyframes auroraB{0%{transform:translate(0,0) scale(1)}100%{transform:translate(52px,-30px) scale(1.22)}}
+.hero h1 .l2{background:linear-gradient(100deg,var(--gold) 18%,#FBE6B0 45%,var(--gold-bright) 60%,var(--gold) 82%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;animation:shimmer 4.5s linear infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-20% 0}}
+
+/* ---------- floating travel icons ---------- */
+.float-layer{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.float-ic{position:absolute;color:rgba(217,179,107,.30);animation:floatY linear infinite}
+@keyframes floatY{0%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-24px) rotate(8deg)}100%{transform:translateY(0) rotate(-4deg)}}
+
+/* ---------- glossy sheen sweep on destination cards ---------- */
+.dest::before{content:"";position:absolute;top:0;left:-70%;width:55%;height:100%;z-index:2;pointer-events:none;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.38),transparent);transform:skewX(-18deg);opacity:0}
+.dest:hover::before{opacity:1;animation:sheen .85s ease}
+@keyframes sheen{0%{left:-70%}100%{left:135%}}
+
+/* ---------- scroll progress bar ---------- */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;width:100%;transform:scaleX(0);transform-origin:left;z-index:60;
+  background:linear-gradient(90deg,var(--gold),var(--gold-bright));box-shadow:0 0 10px rgba(217,179,107,.6)}
+
+/* ---------- plane contrail ---------- */
+.flight-plane::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:58px;transform:translateX(-50%);
+  background:linear-gradient(rgba(217,179,107,.55),transparent)}
+
+/* ---------- countdown timer states ---------- */
+.timer-chip{cursor:pointer;transition:transform .2s,background .3s,border-color .3s}
+.timer-chip:hover{transform:scale(1.05)}
+.timer-chip.low .t{color:#ff8a8a}
+.timer-chip.low .dotpulse{background:#ff5a5f;animation-duration:.7s}
+.timer-chip.escaped{background:rgba(28,120,60,.92);border-color:#5ad17e}
+.timer-chip.escaped .t{color:#c6f7d6;letter-spacing:.06em}
+.timer-chip.escaped .dotpulse{background:#5ad17e;animation:none}
 
 /* ---------- magical custom cursor ---------- */
 .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;

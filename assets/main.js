@@ -242,6 +242,7 @@
       canvas.style.height = window.innerHeight + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
+    var SHAPES = ["rect", "circ", "star", "streamer", "star", "rect"];
     function spawn(x, y, count, power) {
       ensure();
       for (var i = 0; i < count; i++) {
@@ -250,17 +251,28 @@
         particles.push({
           x: x, y: y,
           vx: Math.cos(ang) * sp,
-          vy: Math.sin(ang) * sp - power * 0.35,
-          g: 0.12 + Math.random() * 0.08,
-          size: 4 + Math.random() * 5,
+          vy: Math.sin(ang) * sp - power * 0.4,
+          g: 0.11 + Math.random() * 0.08,
+          size: 5 + Math.random() * 7,
           color: COLORS[(Math.random() * COLORS.length) | 0],
           rot: Math.random() * Math.PI,
-          vr: (Math.random() - 0.5) * 0.3,
-          life: 1, decay: 0.008 + Math.random() * 0.01,
-          shape: Math.random() < 0.5 ? "rect" : "circ"
+          vr: (Math.random() - 0.5) * 0.34,
+          life: 1, decay: 0.006 + Math.random() * 0.009,
+          shape: SHAPES[(Math.random() * SHAPES.length) | 0]
         });
       }
       if (!raf) raf = requestAnimationFrame(loop);
+    }
+    function drawStar(c, r) {
+      c.beginPath();
+      for (var i = 0; i < 5; i++) {
+        var a = (Math.PI / 2.5) * i - Math.PI / 2;
+        c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        var a2 = a + Math.PI / 5;
+        c.lineTo(Math.cos(a2) * (r * 0.45), Math.sin(a2) * (r * 0.45));
+      }
+      c.closePath();
+      c.fill();
     }
     function loop() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -273,6 +285,8 @@
         ctx.translate(p.x, p.y); ctx.rotate(p.rot);
         ctx.fillStyle = p.color;
         if (p.shape === "rect") ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        else if (p.shape === "streamer") ctx.fillRect(-p.size / 4, -p.size, p.size / 2, p.size * 2.2);
+        else if (p.shape === "star") drawStar(ctx, p.size * 0.8);
         else { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2); ctx.fill(); }
         ctx.restore();
       }
@@ -284,10 +298,15 @@
       small: function (x, y) { spawn(x, y, 16, 6); },
       fireworks: function () {
         var w = window.innerWidth, h = window.innerHeight;
-        var pts = [[w * 0.5, h * 0.32], [w * 0.28, h * 0.42], [w * 0.72, h * 0.42]];
+        var pts = [
+          [w * 0.5, h * 0.30], [w * 0.24, h * 0.40], [w * 0.76, h * 0.40],
+          [w * 0.38, h * 0.26], [w * 0.62, h * 0.26], [w * 0.5, h * 0.45]
+        ];
         pts.forEach(function (pt, idx) {
-          setTimeout(function () { spawn(pt[0], pt[1], 60, 11); }, idx * 240);
+          setTimeout(function () { spawn(pt[0], pt[1], 80, 12); }, idx * 220);
         });
+        // celebratory cannons from the bottom corners
+        setTimeout(function () { spawn(0, h, 70, 16); spawn(w, h, 70, 16); }, 120);
       }
     };
   })();
@@ -340,6 +359,24 @@
         pos = (k === seq[0]) ? 1 : 0;
       }
     });
+
+    // triple-tap the passport stamp for a little magic
+    var stamp = document.querySelector(".passport-stamp");
+    if (stamp) {
+      stamp.style.cursor = "pointer";
+      var sc = 0, st = null;
+      stamp.addEventListener("click", function (e) {
+        sc++;
+        clearTimeout(st);
+        st = setTimeout(function () { sc = 0; }, 700);
+        if (!reduceMotion) confetti.small(e.clientX, e.clientY);
+        if (sc >= 3) {
+          sc = 0;
+          if (!reduceMotion) confetti.burst(e.clientX, e.clientY);
+          showToast("\u2728 You found a little magic \u2014 off we go!");
+        }
+      });
+    }
   }
 
   /* ---------- 3D tilt + parallax ---------- */
@@ -395,16 +432,147 @@
     if (!media) return;
     var chip = document.createElement("div");
     chip.className = "timer-chip";
-    chip.innerHTML = '<span class="dotpulse"></span><span class="t">00:00</span>';
+    chip.title = "Think you can beat the clock? Tap it.";
+    chip.innerHTML = '<span class="dotpulse"></span><span class="t">60:00</span>';
     media.appendChild(chip);
     var el = chip.querySelector(".t");
+    var START = 60 * 60; // 60:00
+    var t = START;
+    var finishing = false;
     function fmt(x) {
       var m = (x / 60) | 0, s = x % 60;
       return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
     }
-    if (reduceMotion) { el.textContent = "01:14"; return; }
-    var s = 0;
-    setInterval(function () { s = (s + 1) % 6000; el.textContent = fmt(s); }, 1000);
+    function escaped() {
+      el.textContent = "ESCAPED!";
+      chip.classList.add("escaped");
+      var r = chip.getBoundingClientRect();
+      if (!reduceMotion && r.top < window.innerHeight && r.bottom > 0) {
+        confetti.burst(r.left + r.width / 2, r.top + r.height / 2);
+      }
+      setTimeout(function () {
+        chip.classList.remove("escaped", "low");
+        t = START; finishing = false; el.textContent = fmt(t);
+      }, 2800);
+    }
+    if (reduceMotion) { el.textContent = "60:00"; return; }
+    // authentic real-time countdown
+    setInterval(function () {
+      if (finishing || chip.classList.contains("escaped")) return;
+      t -= 1;
+      if (t <= 0) { finishing = true; escaped(); return; }
+      chip.classList.toggle("low", t <= 30);
+      el.textContent = fmt(t);
+    }, 1000);
+    // tap to dramatically race to the finish
+    chip.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (finishing) return;
+      finishing = true;
+      chip.classList.add("low");
+      var fast = setInterval(function () {
+        t -= 37;
+        if (t <= 0) { clearInterval(fast); escaped(); return; }
+        el.textContent = fmt(t);
+      }, 28);
+    });
+  }
+
+  /* ---------- unlocking intro preloader (once per session) ---------- */
+  function initPreloader() {
+    if (reduceMotion) return;
+    try {
+      if (sessionStorage.getItem("owg-seen")) return;
+      sessionStorage.setItem("owg-seen", "1");
+    } catch (e) { return; }
+
+    var pre = document.createElement("div");
+    pre.className = "preloader";
+    pre.setAttribute("aria-hidden", "true");
+    pre.innerHTML =
+      '<div class="pl-inner">' +
+        '<svg class="pl-lock" width="96" height="118" viewBox="0 0 96 118">' +
+          '<path class="pl-shackle" d="M28 50 V34 a20 20 0 0 1 40 0 V50" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+          '<rect class="pl-bodyrect" x="16" y="50" width="64" height="56" rx="12"/>' +
+          '<circle class="pl-hole" cx="48" cy="72" r="6"/>' +
+          '<rect class="pl-hole" x="45" y="74" width="6" height="17" rx="3"/>' +
+        '</svg>' +
+        '<div class="pl-word">Off We Go Again</div>' +
+        '<div class="pl-sub">unlocking your next adventure</div>' +
+      '</div>';
+    document.body.appendChild(pre);
+    document.documentElement.classList.add("preloading");
+
+    setTimeout(function () { pre.classList.add("unlock"); }, 600);
+    setTimeout(function () { confetti.small(window.innerWidth / 2, window.innerHeight * 0.42); }, 1180);
+    setTimeout(function () {
+      pre.classList.add("done");
+      document.documentElement.classList.remove("preloading");
+    }, 1280);
+    setTimeout(function () { pre.remove(); }, 2100);
+  }
+
+  /* ---------- magnetic buttons ---------- */
+  function initMagnetic() {
+    if (reduceMotion || !finePointer) return;
+    document.querySelectorAll(".btn").forEach(function (btn) {
+      btn.addEventListener("mousemove", function (e) {
+        var r = btn.getBoundingClientRect();
+        var x = e.clientX - (r.left + r.width / 2);
+        var y = e.clientY - (r.top + r.height / 2);
+        btn.style.transform = "translate(" + (x * 0.3) + "px," + (y * 0.4 - 2) + "px)";
+      });
+      btn.addEventListener("mouseleave", function () { btn.style.transform = ""; });
+    });
+  }
+
+  /* ---------- scroll progress bar ---------- */
+  function initScrollProgress() {
+    var bar = document.createElement("div");
+    bar.className = "scroll-progress";
+    bar.setAttribute("aria-hidden", "true");
+    document.body.appendChild(bar);
+    var ticking = false;
+    function upd() {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var p = max > 0 ? Math.min(window.scrollY / max, 1) : 0;
+      bar.style.transform = "scaleX(" + p + ")";
+      ticking = false;
+    }
+    upd();
+    window.addEventListener("scroll", function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(upd); }
+    }, { passive: true });
+  }
+
+  /* ---------- floating travel icons in the hero ---------- */
+  function initFloatingIcons() {
+    if (reduceMotion) return;
+    var hero = document.querySelector(".hero");
+    if (!hero) return;
+    var icons = [
+      '<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>',
+      '<path d="M12 2a7 7 0 0 0-7 7c0 3.6 3.2 6.4 6 8l-1 3h4l-1-3c2.8-1.6 6-4.4 6-8a7 7 0 0 0-7-7z"/>',
+      '<path d="M12 2l2.9 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17.3 5.8 20.6l1.6-6.7L2.2 8.9l6.9-.6z"/>',
+      '<path d="M4 8h16v3a2 2 0 0 0 0 4v1H4v-1a2 2 0 0 0 0-4z"/>'
+    ];
+    var layer = document.createElement("div");
+    layer.className = "float-layer";
+    layer.setAttribute("aria-hidden", "true");
+    for (var i = 0; i < 5; i++) {
+      var span = document.createElement("span");
+      span.className = "float-ic";
+      span.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="100%" height="100%">' + icons[i % icons.length] + '</svg>';
+      span.style.left = (8 + Math.random() * 82) + "%";
+      span.style.top = (8 + Math.random() * 74) + "%";
+      var sz = 18 + Math.random() * 22;
+      span.style.width = sz + "px";
+      span.style.height = sz + "px";
+      span.style.animationDuration = (7 + Math.random() * 6) + "s";
+      span.style.animationDelay = (-Math.random() * 8) + "s";
+      layer.appendChild(span);
+    }
+    hero.appendChild(layer);
   }
 
   ready(function () {
@@ -419,5 +587,9 @@
     initTilt();
     initPlane();
     initTimers();
+    initPreloader();
+    initMagnetic();
+    initScrollProgress();
+    initFloatingIcons();
   });
 })();
