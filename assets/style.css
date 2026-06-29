@@ -323,7 +323,8 @@ header.scrolled{box-shadow:0 8px 28px rgba(13,35,56,.10)}
 @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 
 /* keyhole interactive lift */
-.keyhole{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.keyhole-stage{perspective:1000px}
+.keyhole{transition:transform .18s ease}
 .keyhole-stage:hover .keyhole{transform:translateY(-6px)}
 .passport-stamp{transition:transform .4s cubic-bezier(.2,.9,.25,1)}
 .keyhole-stage:hover .passport-stamp{transform:rotate(-6deg) scale(1.05)}
@@ -359,6 +360,53 @@ header.scrolled{box-shadow:0 8px 28px rgba(13,35,56,.10)}
   .testimonial-card .quote-mark{font-size:104px;left:18px}
 }
 
+/* ---------- 3D tilt on destination cards ---------- */
+.dest-grid{perspective:1100px}
+.dest{transition:transform .25s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;will-change:transform}
+
+/* ---------- confetti / fireworks canvas + toast ---------- */
+.fx-canvas{position:fixed;inset:0;pointer-events:none;z-index:10000}
+.fx-toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);
+  background:linear-gradient(155deg,var(--navy),var(--navy-deep));color:#fff;
+  padding:14px 24px;border-radius:14px;font-weight:600;font-size:14.5px;
+  box-shadow:0 18px 44px rgba(13,35,56,.35);border:1px solid rgba(217,179,107,.45);
+  z-index:10001;opacity:0;transition:opacity .35s ease,transform .35s ease;max-width:88vw;text-align:center}
+.fx-toast.in{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- scroll-driven flying plane ---------- */
+.flight-rail{position:fixed;top:0;right:16px;bottom:0;width:2px;z-index:30;pointer-events:none;
+  background:repeating-linear-gradient(var(--gold) 0 5px,transparent 5px 13px);opacity:.22}
+.flight-plane{position:absolute;left:50%;top:6%;color:var(--gold);
+  transform:translate(-50%,-50%) rotate(135deg);transition:top .12s linear;
+  filter:drop-shadow(0 0 5px rgba(217,179,107,.7))}
+
+/* ---------- escape-room countdown chip ---------- */
+.timer-chip{position:absolute;left:14px;bottom:14px;z-index:3;display:flex;align-items:center;gap:9px;
+  background:rgba(9,26,43,.78);color:#fff;font-family:var(--display);letter-spacing:.06em;
+  padding:7px 13px;border-radius:11px;font-size:15px;backdrop-filter:blur(4px);
+  border:1px solid rgba(217,179,107,.42);box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.timer-chip .dotpulse{width:8px;height:8px;border-radius:50%;background:#e5484d;
+  box-shadow:0 0 0 0 rgba(229,72,77,.6);animation:pulseDot 1.5s infinite}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(229,72,77,.6)}70%{box-shadow:0 0 0 9px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+
+/* ---------- bouncy personality + sticker tags ---------- */
+.why .ic{transition:transform .35s cubic-bezier(.2,1.5,.4,1)}
+.why:hover .ic{transform:rotate(-8deg) scale(1.08)}
+.step .sn{transition:transform .35s cubic-bezier(.2,1.5,.4,1)}
+.step:hover .sn{transform:translateY(-4px) rotate(10deg)}
+.chip span{transition:all .2s,transform .25s cubic-bezier(.2,1.5,.4,1)}
+.chip:hover span{transform:translateY(-2px)}
+.dest:hover .dest-arrow{animation:arrowPop .4s cubic-bezier(.2,1.5,.4,1)}
+@keyframes arrowPop{0%{transform:rotate(-45deg) scale(.8)}60%{transform:rotate(-45deg) scale(1.18)}100%{transform:rotate(-45deg) scale(1)}}
+header a:hover .logo-lockup{animation:wiggle .5s ease}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+.way .tag{display:inline-block;background:rgba(200,161,90,.16);padding:5px 13px;border-radius:999px;
+  transform:rotate(-1.6deg);transition:transform .3s cubic-bezier(.2,1.5,.4,1)}
+.way.book .tag{background:rgba(217,179,107,.18)}
+.way:hover .tag{transform:rotate(0)}
+.passport-stamp{transition:transform .4s cubic-bezier(.2,1.5,.4,1)}
+.passport-stamp:hover{transform:rotate(0) scale(1.08)}
+
 /* ---------- magical custom cursor ---------- */
 .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;
   border-radius:50%;opacity:1;transition:opacity .25s ease}
@@ -386,4 +434,5 @@ body.cursor-down .cursor-ring{width:28px;height:28px;border-color:#fff}
 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
   .sparkle-layer{display:none}.cursor-dot,.cursor-ring,.cursor-spark{display:none}
+  .flight-rail{display:none}
   .js .reveal{opacity:1;transform:none}}

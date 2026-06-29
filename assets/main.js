@@ -220,6 +220,193 @@
     document.addEventListener("mouseenter", function () { dot.style.opacity = ring.style.opacity = ""; });
   }
 
+  /* ---------- confetti / fireworks engine ---------- */
+  var confetti = (function () {
+    var canvas, ctx, particles = [], raf = null, dpr = 1;
+    var COLORS = ["#D9B36B", "#C8A15A", "#0D2338", "#ffffff", "#55789A", "#F1C97A"];
+    function ensure() {
+      if (canvas) return;
+      canvas = document.createElement("canvas");
+      canvas.className = "fx-canvas";
+      canvas.setAttribute("aria-hidden", "true");
+      document.body.appendChild(canvas);
+      ctx = canvas.getContext("2d");
+      resize();
+      window.addEventListener("resize", resize);
+    }
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function spawn(x, y, count, power) {
+      ensure();
+      for (var i = 0; i < count; i++) {
+        var ang = Math.random() * Math.PI * 2;
+        var sp = Math.random() * power + power * 0.2;
+        particles.push({
+          x: x, y: y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp - power * 0.35,
+          g: 0.12 + Math.random() * 0.08,
+          size: 4 + Math.random() * 5,
+          color: COLORS[(Math.random() * COLORS.length) | 0],
+          rot: Math.random() * Math.PI,
+          vr: (Math.random() - 0.5) * 0.3,
+          life: 1, decay: 0.008 + Math.random() * 0.01,
+          shape: Math.random() < 0.5 ? "rect" : "circ"
+        });
+      }
+      if (!raf) raf = requestAnimationFrame(loop);
+    }
+    function loop() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      for (var i = particles.length - 1; i >= 0; i--) {
+        var p = particles[i];
+        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= p.decay;
+        if (p.life <= 0 || p.y > window.innerHeight + 40) { particles.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = Math.max(p.life, 0);
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        if (p.shape === "rect") ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        else { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+      }
+      if (particles.length) raf = requestAnimationFrame(loop);
+      else { raf = null; ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); }
+    }
+    return {
+      burst: function (x, y) { spawn(x, y, 46, 9); },
+      small: function (x, y) { spawn(x, y, 16, 6); },
+      fireworks: function () {
+        var w = window.innerWidth, h = window.innerHeight;
+        var pts = [[w * 0.5, h * 0.32], [w * 0.28, h * 0.42], [w * 0.72, h * 0.42]];
+        pts.forEach(function (pt, idx) {
+          setTimeout(function () { spawn(pt[0], pt[1], 60, 11); }, idx * 240);
+        });
+      }
+    };
+  })();
+
+  function showToast(msg) {
+    var t = document.createElement("div");
+    t.className = "fx-toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.classList.add("in"); });
+    setTimeout(function () {
+      t.classList.remove("in");
+      setTimeout(function () { t.remove(); }, 420);
+    }, 3200);
+  }
+
+  /* ---------- celebratory payoffs ---------- */
+  function initCelebrations() {
+    var form = document.querySelector("form[action]");
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        if (reduceMotion || form.dataset.celebrated) return;
+        e.preventDefault();
+        form.dataset.celebrated = "1";
+        confetti.fireworks();
+        var label = form.querySelector('button[type="submit"] span');
+        if (label) label.textContent = "Off we go!";
+        setTimeout(function () { form.submit(); }, 1200);
+      });
+    }
+    document.querySelectorAll(".testimonial-card .stars").forEach(function (stars) {
+      stars.addEventListener("mouseenter", function () {
+        if (reduceMotion) return;
+        var r = stars.getBoundingClientRect();
+        confetti.small(r.left + r.width / 2, r.top + r.height / 2);
+      });
+    });
+  }
+
+  /* ---------- escape-room easter egg ---------- */
+  function initEasterEgg() {
+    var seq = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+    var pos = 0;
+    document.addEventListener("keydown", function (e) {
+      var k = e.key.toLowerCase();
+      if (k === seq[pos]) {
+        pos++;
+        if (pos === seq.length) { pos = 0; if (!reduceMotion) confetti.fireworks(); showToast("\uD83D\uDD13 You escaped! Off we go again\u2026"); }
+      } else {
+        pos = (k === seq[0]) ? 1 : 0;
+      }
+    });
+  }
+
+  /* ---------- 3D tilt + parallax ---------- */
+  function initTilt() {
+    if (reduceMotion || !finePointer) return;
+    document.querySelectorAll(".dest").forEach(function (el) {
+      el.addEventListener("mousemove", function (e) {
+        var r = el.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        el.style.transform = "perspective(900px) rotateY(" + (px * 8) + "deg) rotateX(" + (-py * 8) + "deg) translateZ(6px)";
+      });
+      el.addEventListener("mouseleave", function () { el.style.transform = ""; });
+    });
+    var keyhole = document.querySelector(".keyhole");
+    var stage = document.querySelector(".keyhole-stage");
+    if (keyhole && stage) {
+      stage.addEventListener("mousemove", function (e) {
+        var r = stage.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5;
+        var py = (e.clientY - r.top) / r.height - 0.5;
+        keyhole.style.transform = "perspective(1000px) rotateY(" + (px * 10) + "deg) rotateX(" + (-py * 10) + "deg) translateY(-6px)";
+      });
+      stage.addEventListener("mouseleave", function () { keyhole.style.transform = ""; });
+    }
+  }
+
+  /* ---------- scroll-driven flying plane ---------- */
+  function initPlane() {
+    if (reduceMotion || window.innerWidth <= 900) return;
+    var rail = document.createElement("div");
+    rail.className = "flight-rail";
+    rail.setAttribute("aria-hidden", "true");
+    rail.innerHTML = '<div class="flight-plane"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></div>';
+    document.body.appendChild(rail);
+    var plane = rail.querySelector(".flight-plane");
+    var ticking = false;
+    function update() {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      var p = max > 0 ? Math.min(window.scrollY / max, 1) : 0;
+      plane.style.top = (6 + p * 88) + "%";
+      ticking = false;
+    }
+    update();
+    window.addEventListener("scroll", function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+  }
+
+  /* ---------- escape-room countdown motif ---------- */
+  function initTimers() {
+    var media = document.querySelector(".offer#rooms .offer-media");
+    if (!media) return;
+    var chip = document.createElement("div");
+    chip.className = "timer-chip";
+    chip.innerHTML = '<span class="dotpulse"></span><span class="t">00:00</span>';
+    media.appendChild(chip);
+    var el = chip.querySelector(".t");
+    function fmt(x) {
+      var m = (x / 60) | 0, s = x % 60;
+      return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+    }
+    if (reduceMotion) { el.textContent = "01:14"; return; }
+    var s = 0;
+    setInterval(function () { s = (s + 1) % 6000; el.textContent = fmt(s); }, 1000);
+  }
+
   ready(function () {
     initNav();
     initHeader();
@@ -227,5 +414,10 @@
     initCounters();
     initSparkles();
     initCursor();
+    initCelebrations();
+    initEasterEgg();
+    initTilt();
+    initPlane();
+    initTimers();
   });
 })();
