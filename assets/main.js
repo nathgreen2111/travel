@@ -57,6 +57,7 @@
     var selectors = [
       ".sec-head", ".way", ".step", ".dest", ".story-photos", ".story-text",
       ".stat", ".why", ".offer", ".cta-band", ".form-card", ".form-aside",
+      ".testimonial-card",
       ".hero-copy", ".keyhole-stage", ".page-hero .inner", ".trust .it"
     ];
     var nodes = [];

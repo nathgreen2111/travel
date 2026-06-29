@@ -331,6 +331,31 @@ header.scrolled{box-shadow:0 8px 28px rgba(13,35,56,.10)}
 /* gentle shimmer on gold logo key */
 .lk-gold,.lk-key-circle{transition:fill .3s}
 
+/* ---------- testimonial ---------- */
+.testimonial-card{position:relative;max-width:800px;margin:0 auto;
+  background:linear-gradient(155deg,var(--navy),var(--navy-deep));color:#fff;
+  border-radius:26px;padding:54px 54px 46px;overflow:hidden;
+  border:1px solid rgba(217,179,107,.30);box-shadow:0 30px 64px rgba(13,35,56,.30)}
+.testimonial-card .testi-glow{position:absolute;top:-32%;right:-12%;width:440px;height:440px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,161,90,.22),transparent 62%);pointer-events:none}
+.testimonial-card .quote-mark{position:absolute;top:-6px;left:30px;font-family:var(--display);
+  font-size:150px;line-height:1;color:rgba(217,179,107,.20);pointer-events:none}
+.testimonial-card .stars{display:flex;gap:5px;margin-bottom:22px;position:relative;z-index:2;color:var(--gold-bright)}
+.testimonial-card .stars svg{filter:drop-shadow(0 2px 5px rgba(217,179,107,.45))}
+.testimonial-card blockquote{position:relative;z-index:2}
+.testimonial-card blockquote p{font-size:19px;line-height:1.66;font-weight:400;color:#EAF0F7;margin-bottom:16px}
+.testimonial-card blockquote p:last-child{margin-bottom:0}
+.testimonial-card blockquote p em{color:var(--gold-bright);font-style:normal;font-weight:600}
+.testimonial-card figcaption{display:flex;flex-direction:column;gap:4px;margin-top:26px;
+  padding-top:24px;border-top:1px solid rgba(255,255,255,.12);position:relative;z-index:2}
+.testimonial-card .who{font-family:var(--display);font-size:20px;color:#fff}
+.testimonial-card .role{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold-bright);font-weight:600}
+@media(max-width:600px){
+  .testimonial-card{padding:40px 26px 34px;border-radius:20px}
+  .testimonial-card blockquote p{font-size:16.5px}
+  .testimonial-card .quote-mark{font-size:104px;left:18px}
+}
+
 /* ---------- magical custom cursor ---------- */
 .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;
   border-radius:50%;opacity:1;transition:opacity .25s ease}
